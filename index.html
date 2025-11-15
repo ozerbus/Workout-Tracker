@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Tracker</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Lucide React icons as inline SVG components
+        const Calendar = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+        );
+        
+        const TrendingUp = ({ size = 20 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        );
+        
+        const Plus = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+        
+        const BarChart3 = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="20" x2="12" y2="10"></line>
+                <line x1="18" y1="20" x2="18" y2="4"></line>
+                <line x1="6" y1="20" x2="6" y2="16"></line>
+            </svg>
+        );
+        
+        const Weight = () => (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="5" r="3"></circle>
+                <line x1="12" y1="22" x2="12" y2="8"></line>
+                <path d="M5 12H2a10 10 0 0 0 20 0h-3"></path>
+            </svg>
+        );
+        
+        const Dumbbell = ({ size = 28 }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m6.5 6.5 11 11"></path>
+                <path d="m21 21-1-1"></path>
+                <path d="m3 3 1 1"></path>
+                <path d="m18 22 4-4"></path>
+                <path d="m2 6 4-4"></path>
+                <path d="m3 10 7-7"></path>
+                <path d="m14 21 7-7"></path>
+            </svg>
+        );
+        
+        const Menu = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        );
+        
+        const X = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+        
+        const Sun = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+        );
+        
+        const Moon = () => (
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+        );
+
+        const WorkoutTrackerApp = () => {
+          const [darkMode, setDarkMode] = useState(false);
+          
+          const initialProgram = {
+            "Day 1": [
+              { name: "Bench Press (C)", setsMin: 4, setsMax: 5, repsMin: 6, repsMax: 8 },
+              { name: "Overhead Press (C)", setsMin: 3, setsMax: 4, repsMin: 6, repsMax: 8 },
+              { name: "Incline DB Press (C)", setsMin: 3, setsMax: 4, repsMin: 8, repsMax: 10 },
+              { name: "DB Lateral Raises (I)", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 },
+              { name: "Skullcrushers (I)", setsMin: 3, setsMax: 4, repsMin: 10, repsMax: 12 },
+              { name: "Dips (I)", setsMin: 3, setsMax: 4, repsMin: 10, repsMax: 12 }
+            ],
+            "Day 2": [
+              { name: "Deadlift (C)", setsMin: 4, setsMax: 5, repsMin: 4, repsMax: 6 },
+              { name: "Barbell Row (C)", setsMin: 4, setsMax: 5, repsMin: 6, repsMax: 8 },
+              { name: "Lat Pulldown (C)", setsMin: 3, setsMax: 4, repsMin: 8, repsMax: 10 },
+              { name: "Pull-Ups (C)", setsMin: 3, setsMax: 4, repsMin: 8, repsMax: 10 },
+              { name: "Barbell Curl (I)", setsMin: 3, setsMax: 4, repsMin: 10, repsMax: 12 },
+              { name: "Face Pulls (I)", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 }
+            ],
+            "Day 3": [
+              { name: "Squat (C)", setsMin: 4, setsMax: 5, repsMin: 6, repsMax: 8 },
+              { name: "Romanian Deadlift (C)", setsMin: 4, setsMax: 5, repsMin: 8, repsMax: 10 },
+              { name: "Walking Lunges (C)", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 12 },
+              { name: "Calf Raises (I)", setsMin: 4, setsMax: 5, repsMin: 15, repsMax: 20 },
+              { name: "Planks (I)", setsMin: 3, setsMax: 5, repsMin: 60, repsMax: 120 }
+            ],
+            "Day 4": [
+              { name: "DB Bench Press (C)", setsMin: 4, setsMax: 5, repsMin: 10, repsMax: 12 },
+              { name: "Arnold Press (C)", setsMin: 3, setsMax: 4, repsMin: 10, repsMax: 12 },
+              { name: "Cable/Deck Fly", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 },
+              { name: "Overhead Tricep Extension", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 },
+              { name: "Push-Ups", setsMin: 2, setsMax: 3, repsMin: 999, repsMax: 999 }
+            ],
+            "Day 5": [
+              { name: "DB Row (C)", setsMin: 4, setsMax: 5, repsMin: 10, repsMax: 12 },
+              { name: "Pull-Ups (C)", setsMin: 3, setsMax: 4, repsMin: 6, repsMax: 8 },
+              { name: "Seated Cable Row (C)", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 },
+              { name: "Hammer Curls (I)", setsMin: 3, setsMax: 4, repsMin: 10, repsMax: 12 },
+              { name: "Rear Delt Fly (I)", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 }
+            ],
+            "Day 6": [
+              { name: "Front Squat (C)", setsMin: 4, setsMax: 5, repsMin: 8, repsMax: 10 },
+              { name: "Leg Press (C)", setsMin: 4, setsMax: 5, repsMin: 8, repsMax: 10 },
+              { name: "Hip Thrust (C)", setsMin: 4, setsMax: 5, repsMin: 8, repsMax: 10 },
+              { name: "Bulgarian Split Squat (C)", setsMin: 3, setsMax: 4, repsMin: 10, repsMax: 10 },
+              { name: "Hamstring Curl (I)", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 },
+              { name: "Calf Raises (I)", setsMin: 4, setsMax: 5, repsMin: 15, repsMax: 20 },
+              { name: "Hanging Leg Raises", setsMin: 3, setsMax: 4, repsMin: 12, repsMax: 15 }
+            ]
+          };
+
+          const stretchingRoutines = {
+            "Day 1": [
+              { name: "Doorway Chest Stretch", duration: "30-60 sec per side", description: "Stand in doorway, place forearm on frame, rotate body away" },
+              { name: "Overhead Shoulder Stretch", duration: "30 sec per arm", description: "Raise arm overhead, bend elbow behind head, gently pull with other hand" },
+              { name: "Cross-Body Shoulder Stretch", duration: "30 sec per arm", description: "Pull arm across chest with opposite hand" },
+              { name: "Tricep Overhead Stretch", duration: "30 sec per arm", description: "Reach arm overhead, bend at elbow, pull elbow gently with other hand" },
+              { name: "Chest Expansion Stretch", duration: "30-45 sec", description: "Clasp hands behind back, straighten arms, lift chest" }
+            ],
+            "Day 2": [
+              { name: "Cat-Cow Stretch", duration: "60 sec", description: "On hands and knees, alternate arching and rounding spine" },
+              { name: "Child's Pose", duration: "60 sec", description: "Kneel, sit back on heels, reach arms forward, lower chest" },
+              { name: "Lat Stretch", duration: "30 sec per side", description: "Reach one arm overhead and lean to opposite side" },
+              { name: "Standing Bicep Stretch", duration: "30 sec per arm", description: "Extend arm behind, rotate thumb down, lean forward slightly" },
+              { name: "Upper Back Stretch", duration: "45 sec", description: "Clasp hands in front, round shoulders, push hands away" }
+            ],
+            "Day 3": [
+              { name: "Standing Quad Stretch", duration: "30 sec per leg", description: "Pull foot to glutes, keep knees together" },
+              { name: "Standing Hamstring Stretch", duration: "30 sec per leg", description: "Place heel on elevated surface, lean forward at hips" },
+              { name: "Hip Flexor Stretch", duration: "30 sec per side", description: "Lunge position, push hips forward, keep back straight" },
+              { name: "Calf Stretch", duration: "30 sec per leg", description: "Lean into wall, back leg straight, front knee bent" },
+              { name: "Figure-4 Glute Stretch", duration: "30 sec per side", description: "Lying on back, cross ankle over knee, pull thigh toward chest" },
+              { name: "Seated Spinal Twist", duration: "30 sec per side", description: "Sit with one leg extended, cross other over, twist toward bent knee" }
+            ],
+            "Day 4": [
+              { name: "Wall Chest Stretch", duration: "30 sec per side", description: "Place palm on wall, rotate body away from arm" },
+              { name: "Shoulder Dislocations", duration: "10-15 reps", description: "Hold band or towel wide, rotate arms overhead and behind" },
+              { name: "Doorway Pec Stretch", duration: "45 sec", description: "Both arms in doorway, step forward to stretch chest" },
+              { name: "Bent-Over Tricep Stretch", duration: "30 sec per arm", description: "Bend forward, reach arm overhead and down spine" },
+              { name: "Wrist Flexor Stretch", duration: "30 sec per arm", description: "Extend arm, pull fingers back with other hand" }
+            ],
+            "Day 5": [
+              { name: "Thread the Needle", duration: "30 sec per side", description: "On hands and knees, reach one arm under body, rotate" },
+              { name: "Doorframe Lat Stretch", duration: "30 sec per side", description: "Hold doorframe, sit back to stretch lats" },
+              { name: "Bicep Wall Stretch", duration: "30 sec per arm", description: "Place palm on wall behind you, rotate body away" },
+              { name: "Shoulder Rolls", duration: "30 sec", description: "Roll shoulders backward in large circles" },
+              { name: "Neck Side Stretch", duration: "20 sec per side", description: "Tilt head to side, gently pull with hand" }
+            ],
+            "Day 6": [
+              { name: "Deep Squat Hold", duration: "60 sec", description: "Squat low, feet flat, elbows inside knees pushing out" },
+              { name: "Pigeon Pose", duration: "45 sec per side", description: "One leg bent in front, other extended back, lower hips" },
+              { name: "Lying Hamstring Stretch", duration: "30 sec per leg", description: "On back, pull one leg toward chest, keep straight" },
+              { name: "Butterfly Stretch", duration: "60 sec", description: "Sit, soles of feet together, press knees toward floor" },
+              { name: "Ankle Circles", duration: "10 circles each direction per foot", description: "Rotate ankle in full circles" },
+              { name: "Kneeling Hip Flexor Stretch", duration: "30 sec per side", description: "Lunge position, push hips forward, squeeze glutes" }
+            ]
+          };
+
+          const [currentView, setCurrentView] = useState('log');
+          const [selectedDay, setSelectedDay] = useState('Day 1');
+          const [workoutHistory, setWorkoutHistory] = useState([]);
+          const [bodyWeightHistory, setBodyWeightHistory] = useState([]);
+          const [program, setProgram] = useState(initialProgram);
+          const [oneRepMaxes, setOneRepMaxes] = useState({});
+          const [menuOpen, setMenuOpen] = useState(false);
+          
+          const [currentWorkout, setCurrentWorkout] = useState({});
+          const [workoutDate, setWorkoutDate] = useState(new Date().toISOString().split('T')[0]);
+
+          const [amWeight, setAmWeight] = useState('');
+          const [pmWeight, setPmWeight] = useState('');
+          const [weightDate, setWeightDate] = useState(new Date().toISOString().split('T')[0]);
+
+          const [rmExercise, setRmExercise] = useState('');
+          const [rmWeight, setRmWeight] = useState('');
+          const [rmReps, setRmReps] = useState('');
+
+          useEffect(() => {
+            const savedHistory = localStorage.getItem('workoutHistory');
+            const savedBodyWeight = localStorage.getItem('bodyWeightHistory');
+            const savedProgram = localStorage.getItem('workoutProgram');
+            const savedOneRepMaxes = localStorage.getItem('oneRepMaxes');
+            const savedDarkMode = localStorage.getItem('darkMode');
+            
+            if (savedHistory) setWorkoutHistory(JSON.parse(savedHistory));
+            if (savedBodyWeight) setBodyWeightHistory(JSON.parse(savedBodyWeight));
+            if (savedProgram) setProgram(JSON.parse(savedProgram));
+            if (savedOneRepMaxes) setOneRepMaxes(JSON.parse(savedOneRepMaxes));
+            if (savedDarkMode) setDarkMode(JSON.parse(savedDarkMode));
+          }, []);
+
+          const toggleDarkMode = () => {
+            const newMode = !darkMode;
+            setDarkMode(newMode);
+            localStorage.setItem('darkMode', JSON.stringify(newMode));
+          };
+
+          const calculate1RM = (weight, reps) => {
+            if (reps === 1) return weight;
+            return Math.round(weight * (1 + reps / 30));
+          };
+
+          const calculateWorkingWeight = (oneRM, reps) => {
+            const percentages = {
+              1: 1.0, 2: 0.95, 3: 0.93, 4: 0.90, 5: 0.87,
+              6: 0.85, 7: 0.83, 8: 0.80, 9: 0.77, 10: 0.75,
+              12: 0.70, 15: 0.65, 20: 0.60
+            };
+            const percentage = percentages[reps] || 0.75;
+            return Math.round(oneRM * percentage);
+          };
+
+          const save1RM = () => {
+            if (!rmExercise || !rmWeight || !rmReps) return;
+            const calculated1RM = calculate1RM(parseFloat(rmWeight), parseInt(rmReps));
+            const updated = { ...oneRepMaxes, [rmExercise]: calculated1RM };
+            setOneRepMaxes(updated);
+            localStorage.setItem('oneRepMaxes', JSON.stringify(updated));
+            setRmExercise('');
+            setRmWeight('');
+            setRmReps('');
+          };
+
+          const saveWorkout = () => {
+            const workout = {
+              date: workoutDate,
+              day: selectedDay,
+              exercises: currentWorkout
+            };
+            const updated = [...workoutHistory, workout];
+            setWorkoutHistory(updated);
+            localStorage.setItem('workoutHistory', JSON.stringify(updated));
+            setCurrentWorkout({});
+            alert('Workout saved!');
+          };
+
+          const saveBodyWeight = () => {
+            if (!amWeight && !pmWeight) return;
+            const entry = {
+              date: weightDate,
+              am: amWeight ? parseFloat(amWeight) : null,
+              pm: pmWeight ? parseFloat(pmWeight) : null
+            };
+            const updated = [...bodyWeightHistory, entry];
+            setBodyWeightHistory(updated);
+            localStorage.setItem('bodyWeightHistory', JSON.stringify(updated));
+            setAmWeight('');
+            setPmWeight('');
+            setWeightDate(new Date().toISOString().split('T')[0]);
+            alert('Body weight saved!');
+          };
+
+          const updateExerciseLog = (exerciseName, setIndex, field, value) => {
+            const updated = { ...currentWorkout };
+            if (!updated[exerciseName]) {
+              updated[exerciseName] = [];
+            }
+            if (!updated[exerciseName][setIndex]) {
+              updated[exerciseName][setIndex] = { reps: '', weight: '' };
+            }
+            updated[exerciseName][setIndex][field] = value;
+            setCurrentWorkout(updated);
+          };
+
+          const getLastWorkoutForDay = (day) => {
+            const dayWorkouts = workoutHistory.filter(w => w.day === day);
+            if (dayWorkouts.length === 0) return null;
+            return dayWorkouts[dayWorkouts.length - 1];
+          };
+
+          const NavButton = ({ icon: Icon, label, view }) => (
+            <button
+              onClick={() => { setCurrentView(view); setMenuOpen(false); }}
+              className={`flex items-center gap-2 p-3 rounded-lg transition-colors ${
+                currentView === view 
+                  ? 'bg-blue-500 text-white' 
+                  : darkMode 
+                    ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' 
+                    : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+            >
+              <Icon />
+              <span className="text-sm font-medium">{label}</span>
+            </button>
+          );
+
+          return (
+            <div className={`min-h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+              <div className="bg-blue-600 text-white p-4 shadow-lg">
+                <div className="flex items-center justify-between max-w-4xl mx-auto">
+                  <div className="flex items-center gap-2">
+                    <Dumbbell />
+                    <h1 className="text-xl font-bold">Workout Tracker</h1>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={toggleDarkMode}
+                      className="p-2 hover:bg-blue-700 rounded-lg transition-colors"
+                      aria-label="Toggle dark mode"
+                    >
+                      {darkMode ? <Sun /> : <Moon />}
+                    </button>
+                    <button onClick={() => setMenuOpen(!menuOpen)} className="lg:hidden">
+                      {menuOpen ? <X /> : <Menu />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="max-w-4xl mx-auto p-4">
+                <div className={`${menuOpen ? 'block' : 'hidden'} lg:flex gap-2 mb-4 flex-wrap`}>
+                  <NavButton icon={Calendar} label="Log Workout" view="log" />
+                  <NavButton icon={TrendingUp} label="Progress" view="progress" />
+                  <NavButton icon={Weight} label="Body Weight" view="bodyweight" />
+                  <NavButton icon={BarChart3} label="1RM Calculator" view="1rm" />
+                  <NavButton icon={Plus} label="Manage Program" view="manage" />
+                </div>
+
+                {currentView === 'log' && (
+                  <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white'} rounded-lg shadow p-4`}>
+                    <h2 className="text-2xl font-bold mb-4">Log Workout</h2>
+                    
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">Date</label>
+                      <input
+                        type="date"
+                        value={workoutDate}
+                        onChange={(e) => setWorkoutDate(e.target.value)}
+                        className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                      />
+                    </div>
+
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium mb-2">Workout Day</label>
+                      <select
+                        value={selectedDay}
+                        onChange={(e) => setSelectedDay(e.target.value)}
+                        className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                      >
+                        {Object.keys(program).map(day => (
+                          <option key={day} value={day}>{day}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {(() => {
+                      const lastWorkout = getLastWorkoutForDay(selectedDay);
+                      return lastWorkout && (
+                        <div className={`mb-4 p-3 rounded ${darkMode ? 'bg-blue-900/30 border border-blue-700' : 'bg-blue-50 border border-blue-200'}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <TrendingUp size={16} />
+                            <span className="font-medium text-sm">Last {selectedDay} workout: {lastWorkout.date}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="space-y-6">
+                      {program[selectedDay]?.map((exercise, idx) => {
+                        const lastWorkout = getLastWorkoutForDay(selectedDay);
+                        const lastExerciseData = lastWorkout?.exercises[exercise.name];
+                        
+                        return (
+                          <div key={idx} className={`border-b pb-4 ${darkMode ? 'border-gray-700' : ''}`}>
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <h3 className="font-bold">{exercise.name}</h3>
+                                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                  {exercise.setsMin}-{exercise.setsMax} sets × {exercise.repsMin === 999 ? 'Failure' : `${exercise.repsMin}-${exercise.repsMax}`} reps
+                                </p>
+                                {oneRepMaxes[exercise.name] && exercise.repsMin !== 999 && (
+                                  <p className="text-sm text-blue-500">
+                                    Suggested: {calculateWorkingWeight(oneRepMaxes[exercise.name], exercise.repsMin)}lbs (based on 1RM: {oneRepMaxes[exercise.name]}lbs)
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {[...Array(exercise.setsMax)].map((_, setIdx) => {
+                              const lastSetData = lastExerciseData?.[setIdx];
+                              
+                              return (
+                                <div key={setIdx} className="mb-2">
+                                  <div className="flex gap-2">
+                                    <span className="w-12 flex items-center text-sm font-medium">Set {setIdx + 1}</span>
+                                    <input
+                                      type="number"
+                                      placeholder="Reps"
+                                      value={currentWorkout[exercise.name]?.[setIdx]?.reps || ''}
+                                      onChange={(e) => updateExerciseLog(exercise.name, setIdx, 'reps', e.target.value)}
+                                      className={`flex-1 p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                                    />
+                                    <input
+                                      type="number"
+                                      placeholder="Weight"
+                                      value={currentWorkout[exercise.name]?.[setIdx]?.weight || ''}
+                                      onChange={(e) => updateExerciseLog(exercise.name, setIdx, 'weight', e.target.value)}
+                                      className={`flex-1 p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                                    />
+                                  </div>
+                                  {lastSetData && lastSetData.reps && (
+                                    <div className={`text-xs mt-1 ml-14 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                      Last time: {lastSetData.reps} reps @ {lastSetData.weight}lbs
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <button
+                      onClick={saveWorkout}
+                      className="w-full mt-6 bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700"
+                    >
+                      Save Workout
+                    </button>
+
+                    <div className={`mt-8 p-4 rounded-lg border-2 ${darkMode ? 'border-green-700 bg-gray-700' : 'border-green-300 bg-green-50'}`}>
+                      <h3 className="text-xl font-bold mb-3 flex items-center gap-2">
+                        <span className="text-green-600">🧘</span>
+                        Post-Workout Stretching Routine
+                      </h3>
+                      <p className={`text-sm mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                        Complete these stretches after your workout for optimal recovery
+                      </p>
+                      <div className="space-y-3">
+                        {stretchingRoutines[selectedDay]?.map((stretch, idx) => (
+                          <div key={idx} className={`p-3 rounded ${darkMode ? 'bg-gray-600' : 'bg-white'}`}>
+                            <div className="flex justify-between items-start mb-1">
+                              <h4 className="font-bold text-sm">{stretch.name}</h4>
+                              <span className={`text-xs px-2 py-1 rounded ${darkMode ? 'bg-green-900 text-green-300' : 'bg-green-200 text-green-800'}`}>
+                                {stretch.duration}
+                              </span>
+                            </div>
+                            <p className={`text-xs ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                              {stretch.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {currentView === 'progress' && (
+                  <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white'} rounded-lg shadow p-4`}>
+                    <h2 className="text-2xl font-bold mb-4">Progress History</h2>
+                    
+                    {workoutHistory.length === 0 ? (
+                      <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>No workouts logged yet. Start tracking to see your progress!</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {workoutHistory.slice().reverse().map((workout, idx) => (
+                          <div key={idx} className={`border-b pb-4 ${darkMode ? 'border-gray-700' : ''}`}>
+                            <div className="flex justify-between mb-2">
+                              <span className="font-bold">{workout.day}</span>
+                              <span className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>{workout.date}</span>
+                            </div>
+                            {Object.entries(workout.exercises).map(([exercise, sets]) => (
+                              <div key={exercise} className="ml-4 text-sm mb-2">
+                                <div className="font-medium">{exercise}</div>
+                                {sets.map((set, setIdx) => (
+                                  set.reps && (
+                                    <div key={setIdx} className={darkMode ? 'text-gray-400' : 'text-gray-600'}>
+                                      Set {setIdx + 1}: {set.reps} reps @ {set.weight}lbs
+                                    </div>
+                                  )
+                                ))}
+                              </div>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {currentView === 'bodyweight' && (
+                  <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white'} rounded-lg shadow p-4`}>
+                    <h2 className="text-2xl font-bold mb-4">Body Weight Tracking</h2>
+                    
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-2">Date</label>
+                      <input
+                        type="date"
+                        value={weightDate}
+                        onChange={(e) => setWeightDate(e.target.value)}
+                        className={`w-full p-2 border rounded mb-4 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">AM Weight (lbs)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={amWeight}
+                            onChange={(e) => setAmWeight(e.target.value)}
+                            className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                            placeholder="Morning"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">PM Weight (lbs)</label>
+                          <input
+                            type="number"
+                            step="0.1"
+                            value={pmWeight}
+                            onChange={(e) => setPmWeight(e.target.value)}
+                            className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                            placeholder="Evening"
+                          />
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={saveBodyWeight}
+                        className="w-full mt-4 bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700"
+                      >
+                        Save Body Weight
+                      </button>
+                    </div>
+
+                    <div className={`border-t pt-4 ${darkMode ? 'border-gray-700' : ''}`}>
+                      <h3 className="font-bold mb-4">Weight History</h3>
+                      {bodyWeightHistory.length === 0 ? (
+                        <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>No body weight data yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {bodyWeightHistory.slice().reverse().map((entry, idx) => (
+                            <div key={idx} className={`flex justify-between border-b pb-2 ${darkMode ? 'border-gray-700' : ''}`}>
+                              <span className="font-medium">{entry.date}</span>
+                              <div className="text-sm">
+                                {entry.am && <span className="mr-4">AM: {entry.am}lbs</span>}
+                                {entry.pm && <span>PM: {entry.pm}lbs</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {currentView === '1rm' && (
+                  <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white'} rounded-lg shadow p-4`}>
+                    <h2 className="text-2xl font-bold mb-4">1RM Calculator</h2>
+                    
+                    <div className="mb-6">
+                      <label className="block text-sm font-medium mb-2">Exercise</label>
+                      <input
+                        type="text"
+                        value={rmExercise}
+                        onChange={(e) => setRmExercise(e.target.value)}
+                        className={`w-full p-2 border rounded mb-4 ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                        placeholder="e.g., Bench Press"
+                      />
+                      
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Weight (lbs)</label>
+                          <input
+                            type="number"
+                            value={rmWeight}
+                            onChange={(e) => setRmWeight(e.target.value)}
+                            className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Reps</label>
+                          <input
+                            type="number"
+                            value={rmReps}
+                            onChange={(e) => setRmReps(e.target.value)}
+                            className={`w-full p-2 border rounded ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-100' : ''}`}
+                          />
+                        </div>
+                      </div>
+                      
+                      {rmWeight && rmReps && (
+                        <div className={`${darkMode ? 'bg-gray-700' : 'bg-blue-50'} p-4 rounded mb-4`}>
+                          <p className={`text-lg font-bold ${darkMode ? 'text-blue-400' : 'text-blue-900'}`}>
+                            Estimated 1RM: {calculate1RM(parseFloat(rmWeight), parseInt(rmReps))}lbs
+                          </p>
+                        </div>
+                      )}
+                      
+                      <button
+                        onClick={save1RM}
+                        className="w-full bg-blue-600 text-white p-3 rounded-lg font-medium hover:bg-blue-700"
+                      >
+                        Save 1RM
+                      </button>
+                    </div>
+
+                    <div className={`border-t pt-4 ${darkMode ? 'border-gray-700' : ''}`}>
+                      <h3 className="font-bold mb-4">Saved 1RMs</h3>
+                      {Object.keys(oneRepMaxes).length === 0 ? (
+                        <p className={darkMode ? 'text-gray-400' : 'text-gray-500'}>No 1RMs saved yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {Object.entries(oneRepMaxes).map(([exercise, max]) => (
+                            <div key={exercise} className={`flex justify-between border-b pb-2 ${darkMode ? 'border-gray-700' : ''}`}>
+                              <span className="font-medium">{exercise}</span>
+                              <span className={`font-bold ${darkMode ? 'text-blue-400' : 'text-blue-600'}`}>{max}lbs</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {currentView === 'manage' && (
+                  <div className={`${darkMode ? 'bg-gray-800 text-gray-100' : 'bg-white'} rounded-lg shadow p-4`}>
+                    <h2 className="text-2xl font-bold mb-4">Manage Program</h2>
+                    <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>View and edit your workout program structure.</p>
+                    
+                    {Object.entries(program).map(([day, exercises]) => (
+                      <div key={day} className={`mb-6 border-b pb-4 ${darkMode ? 'border-gray-700' : ''}`}>
+                        <h3 className="text-xl font-bold mb-2">{day}</h3>
+                        <div className="space-y-2">
+                          {exercises.map((ex, idx) => (
+                            <div key={idx} className={`${darkMode ? 'bg-gray-700' : 'bg-gray-50'} p-3 rounded`}>
+                              <div className="font-medium">{ex.name}</div>
+                              <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                                {ex.setsMin}-{ex.setsMax} sets × {ex.repsMin === 999 ? 'Failure' : `${ex.repsMin}-${ex.repsMax}`} reps
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<WorkoutTrackerApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
